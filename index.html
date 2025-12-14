@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analog/Digital Player</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --accent-color: #ff6b6b;
+            --record-size: 280px;
+            --transition-speed: 300ms;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden; /* スクロール禁止 */
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- 画面レイアウト (横並び) --- */
+        #app-container {
+            display: flex;
+            width: 200vw; /* 2画面分 */
+            height: 100%;
+            transition: transform var(--transition-speed) ease-in-out;
+            will-change: transform;
+        }
+
+        .screen {
+            width: 100vw;
+            height: 100%;
+            position: relative;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        /* --- 3.1 レコード画面 (表) --- */
+        #record-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, #2a2a2a 0%, #111 100%);
+        }
+
+        /* レコード盤 */
+        .record-wrapper {
+            position: relative;
+            width: var(--record-size);
+            height: var(--record-size);
+            margin-bottom: 40px;
+        }
+
+        .record-disc {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: repeating-radial-gradient(#111, #111 2px, #222 3px, #222 4px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: transform 1s ease-out; /* 停止時の慣性用 */
+        }
+
+        /* 回転アニメーション */
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        .record-disc.spinning {
+            animation: spin 3s linear infinite;
+        }
+        
+        .record-disc.paused {
+            animation-play-state: paused;
+        }
+
+        /* レコードラベル */
+        .record-label {
+            width: 35%;
+            height: 35%;
+            background: var(--accent-color);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 5px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+            color: #fff;
+            overflow: hidden;
+        }
+        .label-text { font-size: 10px; opacity: 0.9; }
+        .label-title { font-weight: bold; font-size: 12px; margin-bottom: 2px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* トーンアーム */
+        .tone-arm {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 20px;
+            height: 200px;
+            background-color: #888;
+            transform-origin: top center;
+            transform: rotate(-30deg); /* 初期位置 */
+            transition: transform 0.5s linear;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .tone-arm::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -5px;
+            width: 30px;
+            height: 40px;
+            background-color: #444;
+            border-radius: 4px;
+        }
+
+        /* 操作UI */
+        .controls {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            z-index: 20;
+        }
+        button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 10px;
+        }
+        button:active { transform: scale(0.95); }
+        .play-btn { font-size: 40px; }
+
+        .menu-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            z-index: 30;
+        }
+
+        /* --- 3.2 メニュー画面 (裏) --- */
+        #menu-view {
+            background-color: #fff;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .menu-header h2 { margin: 0; font-size: 20px; }
+        .back-btn { color: #333; font-size: 24px; }
+
+        /* ライブラリリスト */
+        .song-list { list-style: none; padding: 0; margin: 0; }
+        .song-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+        .song-info { display: flex; flex-direction: column; }
+        .song-title { font-weight: bold; font-size: 16px; }
+        .song-artist { font-size: 12px; color: #666; }
+        .delete-btn { color: #ff6b6b; font-size: 14px; margin-left: 10px; }
+
+        /* ファイル追加エリア */
+        .importer {
+            margin-top: 20px;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            text-align: center;
+            border-radius: 8px;
+            color: #666;
+        }
+        
+        /* ステータス表示 */
+        #db-status { font-size: 12px; color: #888; margin-top: auto; padding-top: 20px; }
+
+        /* --- スライド動作 --- */
+        /* メニューオープン時: コンテナ全体を左にスライド */
+        body.menu-open #app-container {
+            transform: translateX(-100vw);
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <div id="record-view" class="screen">
+        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+        
+        <div class="record-wrapper">
+            <div class="tone-arm" id="toneArm"></div>
+            <div class="record-disc" id="recordDisc">
+                <div class="record-label">
+                    <span class="label-title" id="lblTitle">No Audio</span>
+                    <span class="label-text" id="lblArtist">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="prevSong()">⏮</button>
+            <button class="play-btn" onclick="togglePlay()" id="playBtn">▶</button>
+            <button onclick="nextSong()">⏭</button>
+        </div>
+    </div>
+
+    <div id="menu-view" class="screen">
+        <div class="menu-header">
+            <h2>Library</h2>
+            <button class="back-btn" onclick="toggleMenu()">✕</button>
+        </div>
+
+        <ul class="song-list" id="libraryList">
+            </ul>
+
+        <div class="importer" onclick="document.getElementById('fileInput').click()">
+            + Import Music (MP3/WAV)
+            <input type="file" id="fileInput" accept="audio/*" multiple style="display:none" onchange="importFiles(this)">
+        </div>
+
+        <div id="db-status">Using IndexedDB</div>
+    </div>
+</div>
+
+<script>
+    // --- 5. Data & State Management ---
+    const DB_NAME = 'AnalogPlayerDB';
+    const DB_VERSION = 1;
+    let db;
+    let audio = new Audio();
+    let playlist = []; // 現在の再生キュー
+    let currentIndex = -1;
+    let isPlaying = false;
+    let animationFrame;
+
+    // --- IndexedDB Setup ---
+    function initDB() {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onupgradeneeded = (e) => {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains('songs')) {
+                const store = db.createObjectStore('songs', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('title', 'title', { unique: false });
+            }
+        };
+
+        request.onsuccess = (e) => {
+            db = e.target.result;
+            loadLibrary();
+        };
+
+        request.onerror = (e) => console.error("DB Error", e);
+    }
+
+    // --- File Import ---
+    async function importFiles(input) {
+        if (!input.files.length) return;
+
+        // メタデータ解析は簡易的にファイル名を使用 (本来はjsmediatags等を使う)
+        for (let file of input.files) {
+            const tx = db.transaction(['songs'], 'readwrite');
+            const store = tx.objectStore('songs');
+            
+            // ファイル名からArtist - Titleを推測、なければファイル名のみ
+            let title = file.name.replace(/\.[^/.]+$/, "");
+            let artist = "Unknown Artist";
+            
+            if (title.includes('-')) {
+                const parts = title.split('-');
+                artist = parts[0].trim();
+                title = parts.slice(1).join('-').trim();
+            }
+
+            const songData = {
+                title: title,
+                artist: artist,
+                blob: file,
+                addedAt: new Date()
+            };
+
+            store.add(songData);
+        }
+        
+        input.value = ''; // リセット
+        setTimeout(loadLibrary, 500); // 少し待ってリロード
+    }
+
+    // --- Library UI ---
+    function loadLibrary() {
+        const tx = db.transaction(['songs'], 'readonly');
+        const store = tx.objectStore('songs');
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+            const songs = request.result;
+            const listEl = document.getElementById('libraryList');
+            listEl.innerHTML = '';
+            
+            // プレイリスト更新
+            playlist = songs;
+
+            songs.forEach((song, index) => {
+                const li = document.createElement('li');
+                li.className = 'song-item';
+                li.innerHTML = `
+                    <div class="song-info" onclick="playSongAtIndex(${index})">
+                        <span class="song-title">${song.title}</span>
+                        <span class="song-artist">${song.artist}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteSong(${song.id})">🗑</button>
+                `;
+                listEl.appendChild(li);
+            });
+
+            updateStorageInfo();
+        };
+    }
+
+    function deleteSong(id) {
+        if(!confirm("削除しますか？")) return;
+        const tx = db.transaction(['songs'], 'readwrite');
+        tx.objectStore('songs').delete(id);
+        tx.oncomplete = () => loadLibrary();
+    }
+
+    // --- Playback Logic ---
+    function playSongAtIndex(index) {
+        if (index < 0 || index >= playlist.length) return;
+        
+        currentIndex = index;
+        const song = playlist[currentIndex];
+        
+        // BlobからURL生成
+        const url = URL.createObjectURL(song.blob);
+        audio.src = url;
+        audio.play();
+        
+        // UI更新
+        document.getElementById('lblTitle').textContent = song.title;
+        document.getElementById('lblArtist').textContent = song.artist;
+        updatePlayState(true);
+        
+        // メニューが開いていたら閉じる
+        document.body.classList.remove('menu-open');
+    }
+
+    function togglePlay() {
+        if (!audio.src) {
+            if (playlist.length > 0) playSongAtIndex(0);
+            return;
+        }
+
+        if (audio.paused) {
+            audio.play();
+            updatePlayState(true);
+        } else {
+            audio.pause();
+            updatePlayState(false);
+        }
+    }
+
+    function prevSong() {
+        if (currentIndex > 0) playSongAtIndex(currentIndex - 1);
+    }
+
+    function nextSong() {
+        if (currentIndex < playlist.length - 1) playSongAtIndex(currentIndex + 1);
+    }
+
+    // --- UI & Animation ---
+    function updatePlayState(playing) {
+        isPlaying = playing;
+        const disc = document.getElementById('recordDisc');
+        const btn = document.getElementById('playBtn');
+
+        if (playing) {
+            disc.classList.add('spinning');
+            disc.classList.remove('paused');
+            btn.textContent = '⏸';
+            startArmTracking();
+        } else {
+            disc.classList.add('paused');
+            // 完全に停止させず、CSSのtransitionで惰性っぽく見せる
+            btn.textContent = '▶';
+            stopArmTracking();
+        }
+    }
+
+    // トーンアーム制御
+    function startArmTracking() {
+        const arm = document.getElementById('toneArm');
+        
+        function update() {
+            if (!audio.paused && !audio.ended && audio.duration) {
+                // 再生位置に応じて角度計算 (例: 0% -> -30deg, 100% -> 15deg)
+                const progress = audio.currentTime / audio.duration;
+                const startAngle = -30;
+                const endAngle = 15;
+                const currentAngle = startAngle + (endAngle - startAngle) * progress;
+                
+                arm.style.transform = `rotate(${currentAngle}deg)`;
+                animationFrame = requestAnimationFrame(update);
+            }
+        }
+        cancelAnimationFrame(animationFrame);
+        update();
+    }
+
+    function stopArmTracking() {
+        cancelAnimationFrame(animationFrame);
+    }
+    
+    // 曲終了時の処理
+    audio.onended = () => {
+        updatePlayState(false);
+        // トーンアームを戻す
+        document.getElementById('toneArm').style.transform = `rotate(-30deg)`;
+        nextSong(); // 自動で次へ
+    };
+
+    // --- Menu Interaction ---
+    function toggleMenu() {
+        document.body.classList.toggle('menu-open');
+    }
+
+    function updateStorageInfo() {
+        if (navigator.storage && navigator.storage.estimate) {
+            navigator.storage.estimate().then(estimate => {
+                const usageMB = (estimate.usage / 1024 / 1024).toFixed(1);
+                document.getElementById('db-status').textContent = `DB Usage: ${usageMB} MB`;
+            });
+        }
+    }
+
+    // --- Initial Load ---
+    window.onload = initDB;
+
+</script>
+</body>
+</html>
