@@ -1,349 +1,253 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Style Player V2</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --bg-tertiary: #202225;
-            --bg-secondary: #2f3136;
-            --bg-primary: #36393f;
-            --text-normal: #dcddde;
-            --text-muted: #72767d;
-            --accent: #5865F2;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-        
-        body {
-            font-family: sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-normal);
-            height: 100vh;
-            display: flex;
-            overflow: hidden;
-        }
-
-        /* 左サイドバー */
-        .sidebar-servers {
-            width: 72px;
-            background-color: var(--bg-tertiary);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: 12px;
-            flex-shrink: 0;
-        }
-
-        .server-icon {
-            width: 48px;
-            height: 48px;
-            background-color: var(--bg-primary);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            color: var(--text-normal);
-            font-size: 20px;
-        }
-
-        .server-icon:hover { border-radius: 30%; background-color: var(--accent); color: #fff; }
-        .server-icon.active { border-radius: 30%; background-color: var(--accent); }
-        .server-icon.add-btn { color: #3ba55c; background-color: var(--bg-primary); }
-        .server-icon.add-btn:hover { background-color: #3ba55c; color: #fff; }
-
-        /* チャンネルリスト */
-        .sidebar-channels {
-            width: 240px;
-            background-color: var(--bg-secondary);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-        }
-
-        .header {
-            height: 48px; padding: 0 16px; display: flex; align-items: center;
-            font-weight: bold; box-shadow: 0 1px 0 rgba(0,0,0,0.2);
-        }
-
-        .channel-list { flex: 1; padding: 8px; overflow-y: auto; }
-        
-        .channel-item {
-            padding: 6px 8px; margin: 2px 0; border-radius: 4px;
-            color: var(--text-muted); cursor: pointer; display: flex; align-items: center; font-size: 14px;
-        }
-        .channel-item:hover { background-color: rgba(79,84,92,0.32); color: var(--text-normal); }
-        .channel-item.playing { background-color: rgba(79,84,92,0.6); color: #fff; }
-
-        /* コントロールエリア */
-        .user-area { background-color: #292b2f; padding: 8px; }
-        .control-buttons { display: flex; justify-content: center; gap: 20px; margin-bottom: 10px; }
-        .control-btn { background: none; border: none; color: var(--text-normal); cursor: pointer; font-size: 20px; }
-        .control-btn:hover { color: #fff; }
-        
-        input[type="range"] { width: 100%; cursor: pointer; }
-
-        /* メインエリア */
-        .main-content {
-            flex: 1; background-color: var(--bg-primary);
-            display: flex; flex-direction: column; position: relative;
-        }
-        .stage {
-            flex: 1; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; padding: 20px;
-        }
-        .album-art {
-            width: 200px; height: 200px; background: #202225;
-            border-radius: 8px; display: flex; align-items: center; justify-content: center;
-            font-size: 50px; margin-bottom: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-        }
-        .track-info { text-align: center; margin-bottom: 20px; }
-        .track-title { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
-        
-        canvas { width: 100%; height: 120px; max-width: 600px; }
-
-        /* 重要: ファイル入力を見えないがクリック可能な状態にする小技 */
-        /* display: none だとSafariで動かないことがあるため */
-        #hidden-file-input {
-            position: absolute;
-            top: -1000px;
-            left: -1000px;
-            opacity: 0;
-            width: 1px;
-            height: 1px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discord Style Player V2+</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --bg-tertiary:#202225;
+  --bg-secondary:#2f3136;
+  --bg-primary:#36393f;
+  --text-normal:#dcddde;
+  --text-muted:#72767d;
+  --accent:#5865F2;
+}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none}
+body{
+  font-family:sans-serif;
+  background:var(--bg-primary);
+  color:var(--text-normal);
+  height:100vh;
+  display:flex;
+  overflow:hidden;
+}
+.sidebar-servers{
+  width:72px;
+  background:var(--bg-tertiary);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding-top:12px;
+}
+.server-icon{
+  width:48px;height:48px;
+  border-radius:50%;
+  background:var(--bg-primary);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:8px;
+  cursor:pointer;
+  transition:.2s;
+}
+.server-icon:hover,
+.server-icon.active{
+  border-radius:30%;
+  background:var(--accent);
+}
+.server-icon.add-btn{color:#3ba55c}
+.sidebar-channels{
+  width:260px;
+  background:var(--bg-secondary);
+  display:flex;
+  flex-direction:column;
+}
+.header{
+  height:48px;
+  padding:0 12px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  box-shadow:0 1px 0 rgba(0,0,0,.2);
+}
+.header input{
+  flex:1;
+  background:#1e1f22;
+  border:none;
+  color:#fff;
+  padding:6px 8px;
+  border-radius:4px;
+}
+.channel-list{flex:1;padding:8px;overflow-y:auto}
+.channel-item{
+  padding:6px 8px;
+  margin:2px 0;
+  border-radius:4px;
+  cursor:pointer;
+  font-size:14px;
+  color:var(--text-muted);
+}
+.channel-item:hover{background:rgba(79,84,92,.32);color:#fff}
+.channel-item.playing{background:rgba(79,84,92,.6);color:#fff}
+.user-area{background:#292b2f;padding:8px}
+.control-buttons{
+  display:flex;
+  justify-content:center;
+  gap:14px;
+  margin-bottom:8px;
+}
+.control-btn{
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
+}
+.control-btn.active{color:var(--accent)}
+input[type=range]{width:100%}
+.main-content{
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+}
+.album-art{
+  width:200px;height:200px;
+  background:#202225;
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:48px;
+  margin-bottom:16px;
+}
+.track-title{
+  font-size:20px;
+  margin-bottom:8px;
+  cursor:text;
+}
+canvas{width:100%;max-width:600px;height:120px}
+#hidden-file-input{position:absolute;left:-9999px}
+</style>
 </head>
+
 <body>
 
-    <div class="sidebar-servers">
-        <div class="server-icon active"><i class="fa-brands fa-discord"></i></div>
-        <label for="hidden-file-input" class="server-icon add-btn" title="ファイルを追加">
-            <i class="fa-solid fa-plus"></i>
-        </label>
+<div class="sidebar-servers">
+  <div class="server-icon active"><i class="fa-brands fa-discord"></i></div>
+  <label for="hidden-file-input" class="server-icon add-btn"><i class="fa-solid fa-plus"></i></label>
+</div>
+
+<div class="sidebar-channels">
+  <div class="header">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input id="search" placeholder="Search">
+  </div>
+  <div class="channel-list" id="playlist"></div>
+  <div class="user-area">
+    <div class="control-buttons">
+      <button class="control-btn" id="shuffle"><i class="fa-solid fa-shuffle"></i></button>
+      <button class="control-btn" id="prev"><i class="fa-solid fa-backward-step"></i></button>
+      <button class="control-btn" id="play"><i class="fa-solid fa-play"></i></button>
+      <button class="control-btn" id="next"><i class="fa-solid fa-forward-step"></i></button>
+      <button class="control-btn" id="loop"><i class="fa-solid fa-repeat"></i></button>
     </div>
+    <input type="range" id="seek" value="0">
+  </div>
+</div>
 
-    <div class="sidebar-channels">
-        <div class="header">Local Library</div>
-        <div class="channel-list" id="playlist-view">
-            <div style="padding:10px; font-size:12px; color:#72767d;">
-                左の緑の「＋」ボタンを押して<br>音楽ファイル(.mp3等)を選択してください
-            </div>
-        </div>
+<div class="main-content">
+  <div class="album-art"><i class="fa-solid fa-music"></i></div>
+  <div class="track-title" id="title">No Track</div>
+  <canvas id="viz"></canvas>
+</div>
 
-        <div class="user-area">
-            <div class="control-buttons">
-                <button class="control-btn" id="btn-prev"><i class="fa-solid fa-backward-step"></i></button>
-                <button class="control-btn" id="btn-play"><i class="fa-solid fa-play"></i></button>
-                <button class="control-btn" id="btn-next"><i class="fa-solid fa-forward-step"></i></button>
-            </div>
-            <input type="range" id="seek-bar" value="0" min="0" step="0.1">
-        </div>
-    </div>
+<input type="file" id="hidden-file-input" multiple accept="audio/*">
 
-    <div class="main-content">
-        <div class="stage">
-            <div class="album-art"><i class="fa-solid fa-music"></i></div>
-            <div class="track-info">
-                <div class="track-title" id="title-display">No File</div>
-                <div id="artist-display">Waiting...</div>
-            </div>
-            <canvas id="visualizer"></canvas>
-        </div>
-    </div>
+<script>
+const fileInput=document.getElementById("hidden-file-input");
+const playlistEl=document.getElementById("playlist");
+const playBtn=document.getElementById("play");
+const nextBtn=document.getElementById("next");
+const prevBtn=document.getElementById("prev");
+const loopBtn=document.getElementById("loop");
+const shuffleBtn=document.getElementById("shuffle");
+const seek=document.getElementById("seek");
+const titleEl=document.getElementById("title");
+const search=document.getElementById("search");
+const canvas=document.getElementById("viz");
+const ctx=canvas.getContext("2d");
 
-    <input type="file" id="hidden-file-input" multiple accept="audio/mpeg, audio/mp3, audio/wav, audio/aac, audio/m4a, .mp3, .wav, .m4a">
+let audio=new Audio();
+let tracks=[];
+let current=0;
+let loopMode="off";     // off | track | server
+let shuffleMode="off"; // off | server | global
 
-    <script>
-        // 要素の取得
-        const fileInput = document.getElementById('hidden-file-input');
-        const playlistView = document.getElementById('playlist-view');
-        const titleDisplay = document.getElementById('title-display');
-        const playBtn = document.getElementById('btn-play');
-        const nextBtn = document.getElementById('btn-next');
-        const prevBtn = document.getElementById('btn-prev');
-        const seekBar = document.getElementById('seek-bar');
-        const canvas = document.getElementById('visualizer');
-        const ctx = canvas.getContext('2d');
+fileInput.onchange=e=>{
+  [...e.target.files].forEach(f=>{
+    tracks.push({
+      file:f,
+      name:f.name,
+      display:f.name,
+      url:URL.createObjectURL(f)
+    });
+  });
+  render();
+};
 
-        // 状態管理
-        let playlist = [];
-        let currentIdx = 0;
-        let audio = new Audio();
-        let audioCtx, analyser, source;
-        let isInit = false;
+function render(){
+  playlistEl.innerHTML="";
+  tracks
+    .filter(t=>t.display.toLowerCase().includes(search.value.toLowerCase()))
+    .forEach((t,i)=>{
+      const d=document.createElement("div");
+      d.className="channel-item"+(i===current?" playing":"");
+      d.textContent=t.display;
+      d.onclick=()=>load(i,true);
+      d.ondblclick=()=>rename(i);
+      playlistEl.appendChild(d);
+    });
+}
 
-        // 1. ファイル選択時の処理
-        fileInput.addEventListener('change', function(e) {
-            const files = Array.from(e.target.files);
-            if (files.length === 0) return;
+function rename(i){
+  const name=prompt("タイトルを編集",tracks[i].display);
+  if(name){tracks[i].display=name;render();}
+}
 
-            // 既存リストに追加
-            files.forEach(file => {
-                const url = URL.createObjectURL(file);
-                playlist.push({ name: file.name, url: url });
-            });
+function load(i,play){
+  current=i;
+  audio.src=tracks[i].url;
+  titleEl.textContent=tracks[i].display;
+  render();
+  if(play) audio.play();
+}
 
-            renderPlaylist();
+playBtn.onclick=()=>audio.paused?audio.play():audio.pause();
+nextBtn.onclick=()=>next();
+prevBtn.onclick=()=>load((current-1+tracks.length)%tracks.length,true);
 
-            // まだ何も再生していなければ、最初の曲をロードだけする（自動再生はしない）
-            if (playlist.length === files.length) {
-                loadTrack(0, false); 
-            }
-        });
+function next(){
+  if(shuffleMode!=="off"){
+    load(Math.floor(Math.random()*tracks.length),true);
+  }else{
+    load((current+1)%tracks.length,true);
+  }
+}
 
-        // 2. プレイリスト描画
-        function renderPlaylist() {
-            playlistView.innerHTML = '';
-            playlist.forEach((track, i) => {
-                const el = document.createElement('div');
-                el.className = `channel-item ${i === currentIdx ? 'playing' : ''}`;
-                el.innerHTML = `<i class="fa-solid fa-music" style="margin-right:8px; font-size:10px;"></i> ${track.name}`;
-                el.onclick = () => {
-                    loadTrack(i, true); // クリック時は再生する
-                };
-                playlistView.appendChild(el);
-            });
-        }
+audio.onended=()=>{
+  if(loopMode==="track"){audio.currentTime=0;audio.play();}
+  else if(loopMode==="server"){next();}
+};
 
-        // 3. トラック読み込み
-        function loadTrack(index, autoPlay) {
-            if (index < 0 || index >= playlist.length) return;
-            currentIdx = index;
-            
-            const track = playlist[index];
-            audio.src = track.url;
-            titleDisplay.innerText = track.name;
-            
-            renderPlaylist(); // ハイライト更新
+loopBtn.onclick=()=>{
+  loopMode=loopMode==="off"?"track":loopMode==="track"?"server":"off";
+  loopBtn.classList.toggle("active",loopMode!=="off");
+};
 
-            if (autoPlay) {
-                playAudio();
-            }
-        }
+shuffleBtn.onclick=()=>{
+  shuffleMode=shuffleMode==="off"?"server":"off";
+  shuffleBtn.classList.toggle("active",shuffleMode!=="off");
+};
 
-        // 4. 再生処理（AudioContextの初期化を含む）
-        function playAudio() {
-            // ブラウザの自動再生ポリシー対策：ユーザー操作時にAudioContextを作る
-            if (!isInit) {
-                initAudioContext();
-                isInit = true;
-            }
-            if (audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+search.oninput=render;
 
-            audio.play().then(() => {
-                playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-                updateMetadata();
-            }).catch(e => {
-                console.error("再生エラー:", e);
-                // alert("再生できませんでした。別のファイルを試してください。");
-            });
-        }
+audio.ontimeupdate=()=>{
+  if(audio.duration) seek.value=audio.currentTime/audio.duration*100;
+};
+seek.oninput=()=>audio.currentTime=seek.value/100*audio.duration;
 
-        function pauseAudio() {
-            audio.pause();
-            playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-        }
+canvas.width=600;
+</script>
 
-        function togglePlay() {
-            if (playlist.length === 0) return;
-            audio.paused ? playAudio() : pauseAudio();
-        }
-
-        // AudioContextのセットアップ（ビジュアライザー用）
-        function initAudioContext() {
-            try {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                analyser = audioCtx.createAnalyser();
-                // CORSエラー回避のため、MediaElementSourceを使うときは注意が必要だが、
-                // ローカルBlob URLなら通常問題ない
-                source = audioCtx.createMediaElementSource(audio);
-                source.connect(analyser);
-                analyser.connect(audioCtx.destination);
-                analyser.fftSize = 256;
-                drawVisualizer();
-            } catch (e) {
-                console.log("AudioContext setup failed (safari may need explicit click)", e);
-            }
-        }
-
-        // ビジュアライザー描画ループ
-        function drawVisualizer() {
-            requestAnimationFrame(drawVisualizer);
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            analyser.getByteFrequencyData(dataArray);
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const barWidth = (canvas.width / bufferLength) * 2.5;
-            let x = 0;
-
-            for(let i = 0; i < bufferLength; i++) {
-                const barHeight = dataArray[i] / 2;
-                ctx.fillStyle = `rgb(${100 + barHeight}, 100, 255)`;
-                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-                x += barWidth + 1;
-            }
-        }
-
-        // シークバーなどのイベント
-        playBtn.onclick = togglePlay;
-        
-        nextBtn.onclick = () => {
-            let next = currentIdx + 1;
-            if (next >= playlist.length) next = 0;
-            loadTrack(next, true);
-        };
-        
-        prevBtn.onclick = () => {
-            let prev = currentIdx - 1;
-            if (prev < 0) prev = playlist.length - 1;
-            loadTrack(prev, true);
-        };
-
-        audio.addEventListener('timeupdate', () => {
-            if (audio.duration) {
-                seekBar.value = (audio.currentTime / audio.duration) * 100;
-            }
-        });
-        
-        audio.addEventListener('ended', () => nextBtn.click());
-
-        seekBar.addEventListener('input', () => {
-            if (audio.duration) {
-                audio.currentTime = (seekBar.value / 100) * audio.duration;
-            }
-        });
-
-        // Media Session API (バックグラウンド再生用)
-        function updateMetadata() {
-            if ('mediaSession' in navigator) {
-                navigator.mediaSession.metadata = new MediaMetadata({
-                    title: playlist[currentIdx].name,
-                    artist: 'My Playlist',
-                    artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/1384/1384060.png', sizes: '512x512', type: 'image/png' }]
-                });
-                navigator.mediaSession.setActionHandler('play', playAudio);
-                navigator.mediaSession.setActionHandler('pause', pauseAudio);
-                navigator.mediaSession.setActionHandler('previoustrack', () => prevBtn.click());
-                navigator.mediaSession.setActionHandler('nexttrack', () => nextBtn.click());
-            }
-        }
-
-        // リサイズ対応
-        window.addEventListener('resize', () => {
-            canvas.width = canvas.parentElement.clientWidth;
-        });
-        canvas.width = canvas.parentElement.clientWidth;
-
-    </script>
 </body>
 </html>
