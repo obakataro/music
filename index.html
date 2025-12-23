@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Discord Style Player V2+</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Discord Style Player — GitHub Pages Ready</title>
+
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#5865F2">
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-:root {
+:root{
   --bg-tertiary:#202225;
   --bg-secondary:#2f3136;
   --bg-primary:#36393f;
@@ -16,238 +20,618 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;user-select:none}
 body{
-  font-family:sans-serif;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
   background:var(--bg-primary);
   color:var(--text-normal);
-  height:100vh;
-  display:flex;
-  overflow:hidden;
+  height:100vh; display:flex; overflow:hidden;
 }
+
+/* left server column */
 .sidebar-servers{
-  width:72px;
-  background:var(--bg-tertiary);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  padding-top:12px;
+  width:72px; background:var(--bg-tertiary);
+  display:flex; flex-direction:column; align-items:center; padding-top:12px; flex-shrink:0;
 }
 .server-icon{
-  width:48px;height:48px;
-  border-radius:50%;
-  background:var(--bg-primary);
-  display:flex;align-items:center;justify-content:center;
-  margin-bottom:8px;
-  cursor:pointer;
-  transition:.2s;
+  width:48px;height:48px;border-radius:50%; background:var(--bg-primary);
+  display:flex;align-items:center;justify-content:center;margin-bottom:8px;cursor:pointer;transition:.18s;
+  color:var(--text-normal); font-size:20px;
 }
-.server-icon:hover,
-.server-icon.active{
-  border-radius:30%;
-  background:var(--accent);
-}
-.server-icon.add-btn{color:#3ba55c}
+.server-icon:hover{ border-radius:30%; background:var(--accent); color:#fff;}
+.server-icon.active{ border-radius:30%; background:var(--accent); color:#fff;}
+.server-icon.add-btn{ color:#3ba55c; background:var(--bg-primary);}
+.server-icon.add-btn:hover{ background:#3ba55c; color:#fff;}
+
+/* channel column */
 .sidebar-channels{
-  width:260px;
-  background:var(--bg-secondary);
-  display:flex;
-  flex-direction:column;
+  width:280px; background:var(--bg-secondary); display:flex; flex-direction:column; flex-shrink:0;
 }
 .header{
-  height:48px;
-  padding:0 12px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  box-shadow:0 1px 0 rgba(0,0,0,.2);
+  height:52px; padding:0 12px; display:flex; align-items:center; gap:8px;
+  box-shadow:0 1px 0 rgba(0,0,0,0.2);
 }
 .header input{
-  flex:1;
-  background:#1e1f22;
-  border:none;
-  color:#fff;
-  padding:6px 8px;
-  border-radius:4px;
+  flex:1; background:#1e1f22; border:none; color:var(--text-normal); padding:6px 10px; border-radius:6px;
 }
-.channel-list{flex:1;padding:8px;overflow-y:auto}
+.channel-list{ flex:1; padding:10px; overflow-y:auto; }
 .channel-item{
-  padding:6px 8px;
-  margin:2px 0;
-  border-radius:4px;
-  cursor:pointer;
-  font-size:14px;
-  color:var(--text-muted);
+  padding:8px 10px; margin:6px 0; border-radius:6px; cursor:pointer;
+  color:var(--text-muted); display:flex; align-items:center; gap:8px; font-size:14px;
 }
-.channel-item:hover{background:rgba(79,84,92,.32);color:#fff}
-.channel-item.playing{background:rgba(79,84,92,.6);color:#fff}
-.user-area{background:#292b2f;padding:8px}
-.control-buttons{
-  display:flex;
-  justify-content:center;
-  gap:14px;
-  margin-bottom:8px;
-}
-.control-btn{
-  background:none;
-  border:none;
-  color:#fff;
-  font-size:18px;
-  cursor:pointer;
-}
-.control-btn.active{color:var(--accent)}
-input[type=range]{width:100%}
-.main-content{
-  flex:1;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-}
+.channel-item:hover{ background:rgba(79,84,92,0.32); color:var(--text-normal);}
+.channel-item.playing{ background:rgba(79,84,92,0.6); color:#fff}
+
+/* bottom controls */
+.user-area{ background:#292b2f; padding:8px; }
+.control-buttons{ display:flex; justify-content:center; gap:14px; margin-bottom:8px; }
+.control-btn{ background:none; border:none; color:var(--text-normal); font-size:18px; cursor:pointer; padding:6px; border-radius:6px;}
+.control-btn:hover{ color:#fff; }
+.control-btn.active{ color:var(--accent); background: rgba(88,101,242,0.08); }
+
+/* main area */
+.main-content{ flex:1; background:var(--bg-primary); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:22px; position:relative;}
 .album-art{
-  width:200px;height:200px;
-  background:#202225;
-  border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:48px;
-  margin-bottom:16px;
+  width:220px; height:220px; background:#202225; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:56px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.3); margin-bottom:16px;
 }
-.track-title{
-  font-size:20px;
-  margin-bottom:8px;
-  cursor:text;
-}
-canvas{width:100%;max-width:600px;height:120px}
-#hidden-file-input{position:absolute;left:-9999px}
+.track-info{text-align:center; margin-bottom:16px;}
+.track-title{ font-size:20px; font-weight:600; color:var(--text-normal); margin-bottom:6px; }
+.track-artist{ font-size:13px; color:var(--text-muted); }
+
+/* visualizer */
+canvas{ width:100%; max-width:760px; height:140px; border-radius:8px; background:transparent; }
+
+/* hidden file input */
+#hidden-file-input{ position:absolute; left:-9999px; top:-9999px; }
+
+/* small utilities */
+.small{ font-size:12px; color:var(--text-muted); }
+.controls-row{ display:flex; align-items:center; gap:8px; }
 </style>
 </head>
-
 <body>
 
-<div class="sidebar-servers">
-  <div class="server-icon active"><i class="fa-brands fa-discord"></i></div>
-  <label for="hidden-file-input" class="server-icon add-btn"><i class="fa-solid fa-plus"></i></label>
-</div>
-
-<div class="sidebar-channels">
-  <div class="header">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <input id="search" placeholder="Search">
-  </div>
-  <div class="channel-list" id="playlist"></div>
-  <div class="user-area">
-    <div class="control-buttons">
-      <button class="control-btn" id="shuffle"><i class="fa-solid fa-shuffle"></i></button>
-      <button class="control-btn" id="prev"><i class="fa-solid fa-backward-step"></i></button>
-      <button class="control-btn" id="play"><i class="fa-solid fa-play"></i></button>
-      <button class="control-btn" id="next"><i class="fa-solid fa-forward-step"></i></button>
-      <button class="control-btn" id="loop"><i class="fa-solid fa-repeat"></i></button>
+  <div class="sidebar-servers" aria-hidden="false">
+    <div id="logo" class="server-icon active" title="Search / Quick-Open (クリックで検索フォーカス)">
+      <i class="fa-brands fa-discord"></i>
     </div>
-    <input type="range" id="seek" value="0">
+    <label for="hidden-file-input" class="server-icon add-btn" title="ファイルを追加 (複数選択可)">
+      <i class="fa-solid fa-plus"></i>
+    </label>
   </div>
-</div>
 
-<div class="main-content">
-  <div class="album-art"><i class="fa-solid fa-music"></i></div>
-  <div class="track-title" id="title">No Track</div>
-  <canvas id="viz"></canvas>
-</div>
+  <div class="sidebar-channels" role="region" aria-label="Library">
+    <div class="header">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input id="search" placeholder="Search songs / playlists...">
+      <div style="width:8px"></div>
+      <button id="import-btn" class="control-btn" title="インポート"><i class="fa-solid fa-file-import"></i></button>
+      <button id="export-btn" class="control-btn" title="エクスポート（metadataのみ）"><i class="fa-regular fa-file-export"></i></button>
+    </div>
 
-<input type="file" id="hidden-file-input" multiple accept="audio/*">
+    <div class="channel-list" id="playlist-view">
+      <div style="padding:12px; font-size:13px; color:var(--text-muted)">
+        左の緑の「＋」ボタンで音楽ファイル(.mp3/.m4a/.wav 等)を追加してください。<br>
+        アップロード後はブラウザの IndexedDB に保存されます（ブラウザに依存）。
+      </div>
+    </div>
+
+    <div class="user-area">
+      <div class="control-buttons">
+        <button id="shuffle" class="control-btn" title="Shuffle (短押し: サーバー内 / 長押し: 全体)"><i class="fa-solid fa-shuffle"></i></button>
+        <button id="prev" class="control-btn" title="Prev"><i class="fa-solid fa-backward-step"></i></button>
+        <button id="play" class="control-btn" title="Play / Pause"><i class="fa-solid fa-play"></i></button>
+        <button id="next" class="control-btn" title="Next"><i class="fa-solid fa-forward-step"></i></button>
+        <button id="loop" class="control-btn" title="Loop mode"><i class="fa-solid fa-repeat"></i></button>
+      </div>
+      <input type="range" id="seek-bar" min="0" max="100" value="0" step="0.1" aria-label="seek bar">
+      <div style="display:flex; justify-content:space-between; margin-top:6px;">
+        <div class="small" id="time-current">00:00</div>
+        <div class="small" id="time-duration">00:00</div>
+      </div>
+    </div>
+  </div>
+
+  <main class="main-content">
+    <div class="album-art"><i class="fa-solid fa-music"></i></div>
+    <div class="track-info">
+      <div id="title-display" class="track-title" contenteditable="false" title="ダブルクリックで編集可能">No Track</div>
+      <div id="artist-display" class="track-artist">Waiting...</div>
+    </div>
+    <canvas id="visualizer"></canvas>
+  </main>
+
+  <input id="hidden-file-input" type="file" multiple accept="audio/*">
 
 <script>
-const fileInput=document.getElementById("hidden-file-input");
-const playlistEl=document.getElementById("playlist");
-const playBtn=document.getElementById("play");
-const nextBtn=document.getElementById("next");
-const prevBtn=document.getElementById("prev");
-const loopBtn=document.getElementById("loop");
-const shuffleBtn=document.getElementById("shuffle");
-const seek=document.getElementById("seek");
-const titleEl=document.getElementById("title");
-const search=document.getElementById("search");
-const canvas=document.getElementById("viz");
-const ctx=canvas.getContext("2d");
+/* -------------------------
+   Simple IndexedDB wrapper
+   ------------------------- */
+const DB_NAME = 'discord-player-db';
+const DB_VER = 1;
+const STORE_TRACKS = 'tracks';
+const STORE_STATE = 'state';
 
-let audio=new Audio();
-let tracks=[];
-let current=0;
-let loopMode="off";     // off | track | server
-let shuffleMode="off"; // off | server | global
-
-fileInput.onchange=e=>{
-  [...e.target.files].forEach(f=>{
-    tracks.push({
-      file:f,
-      name:f.name,
-      display:f.name,
-      url:URL.createObjectURL(f)
-    });
+function openDB(){
+  return new Promise((res, rej)=>{
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = (ev)=>{
+      const db = ev.target.result;
+      if(!db.objectStoreNames.contains(STORE_TRACKS)){
+        const s = db.createObjectStore(STORE_TRACKS, { keyPath: 'id' });
+        s.createIndex('by-name', 'name', { unique: false });
+      }
+      if(!db.objectStoreNames.contains(STORE_STATE)){
+        db.createObjectStore(STORE_STATE, { keyPath: 'k' });
+      }
+    };
+    req.onsuccess = ()=>res(req.result);
+    req.onerror = ()=>rej(req.error);
   });
-  render();
-};
-
-function render(){
-  playlistEl.innerHTML="";
-  tracks
-    .filter(t=>t.display.toLowerCase().includes(search.value.toLowerCase()))
-    .forEach((t,i)=>{
-      const d=document.createElement("div");
-      d.className="channel-item"+(i===current?" playing":"");
-      d.textContent=t.display;
-      d.onclick=()=>load(i,true);
-      d.ondblclick=()=>rename(i);
-      playlistEl.appendChild(d);
-    });
 }
 
-function rename(i){
-  const name=prompt("タイトルを編集",tracks[i].display);
-  if(name){tracks[i].display=name;render();}
+async function idbPut(store, obj){ const db = await openDB(); return new Promise((res,rej)=>{ const tx=db.transaction(store,'readwrite'); tx.objectStore(store).put(obj); tx.oncomplete=()=>res(true); tx.onerror=()=>rej(tx.error); });}
+async function idbGet(store, key){ const db=await openDB(); return new Promise((res,rej)=>{ const tx=db.transaction(store,'readonly'); const r=tx.objectStore(store).get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });}
+async function idbGetAll(store){ const db=await openDB(); return new Promise((res,rej)=>{ const tx=db.transaction(store,'readonly'); const r=tx.objectStore(store).getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });}
+async function idbDelete(store, key){ const db=await openDB(); return new Promise((res,rej)=>{ const tx=db.transaction(store,'readwrite'); tx.objectStore(store).delete(key); tx.oncomplete=()=>res(true); tx.onerror=()=>rej(tx.error); });}
+
+/* -------------------------
+   State & DOM
+   ------------------------- */
+const fileInput = document.getElementById('hidden-file-input');
+const playlistView = document.getElementById('playlist-view');
+const searchInput = document.getElementById('search');
+const playBtn = document.getElementById('play');
+const nextBtn = document.getElementById('next');
+const prevBtn = document.getElementById('prev');
+const loopBtn = document.getElementById('loop');
+const shuffleBtn = document.getElementById('shuffle');
+const seekBar = document.getElementById('seek-bar');
+const titleDisplay = document.getElementById('title-display');
+const artistDisplay = document.getElementById('artist-display');
+const timeCurrent = document.getElementById('time-current');
+const timeDuration = document.getElementById('time-duration');
+const logo = document.getElementById('logo');
+const importBtn = document.getElementById('import-btn');
+const exportBtn = document.getElementById('export-btn');
+
+const canvas = document.getElementById('visualizer');
+const ctx = canvas.getContext('2d');
+
+let audio = new Audio();
+audio.preload = 'metadata';
+
+let audioCtx = null;
+let analyser = null;
+let sourceNode = null;
+let vizRAF = null;
+let audioInit = false;
+
+let tracks = []; // {id, name, display, blob}
+let currentIdx = -1;
+
+let loopMode = 'off'; // off | track | server
+let shuffleMode = 'off'; // off | server | global
+
+let saveInterval = null;
+
+/* -------------------------
+   Utilities
+   ------------------------- */
+function uid(){ return 't_'+Math.random().toString(36).slice(2,10); }
+function fmtTime(sec){
+  if(!isFinite(sec) || sec<0) return '00:00';
+  const s = Math.floor(sec%60).toString().padStart(2,'0');
+  const m = Math.floor(sec/60).toString().padStart(2,'0');
+  return `${m}:${s}`;
 }
 
-function load(i,play){
-  current=i;
-  audio.src=tracks[i].url;
-  titleEl.textContent=tracks[i].display;
-  render();
-  if(play) audio.play();
+/* -------------------------
+   IndexedDB: save blob(s) and metadata
+   ------------------------- */
+async function addFilesToDB(fileList){
+  for(const f of fileList){
+    const id = uid();
+    const record = { id, name: f.name, display: f.name, blob: f };
+    // store blob directly (some browsers will persist)
+    try {
+      await idbPut(STORE_TRACKS, record);
+      tracks.push(record);
+    } catch(e){
+      console.error('DB put failed', e);
+      // fallback: keep in-memory only
+      tracks.push(record);
+    }
+  }
+  renderPlaylist();
 }
 
-playBtn.onclick=()=>audio.paused?audio.play():audio.pause();
-nextBtn.onclick=()=>next();
-prevBtn.onclick=()=>load((current-1+tracks.length)%tracks.length,true);
-
-function next(){
-  if(shuffleMode!=="off"){
-    load(Math.floor(Math.random()*tracks.length),true);
-  }else{
-    load((current+1)%tracks.length,true);
+/* load all tracks from DB into memory */
+async function loadTracksFromDB(){
+  try{
+    const stored = await idbGetAll(STORE_TRACKS);
+    // older records might not include blob if previously exported differently
+    tracks = stored.map(r => ({ id: r.id, name: r.name, display: r.display || r.name, blob: r.blob || null }));
+  }catch(e){
+    console.warn('loadTracksFromDB failed', e);
+    tracks = [];
   }
 }
 
-audio.onended=()=>{
-  if(loopMode==="track"){audio.currentTime=0;audio.play();}
-  else if(loopMode==="server"){next();}
-};
+/* -------------------------
+   Rendering playlist
+   ------------------------- */
+function renderPlaylist(){
+  playlistView.innerHTML = '';
+  const q = searchInput.value.trim().toLowerCase();
+  if(tracks.length === 0){
+    const info = document.createElement('div');
+    info.style.padding = '12px';
+    info.style.color = 'var(--text-muted)';
+    info.innerHTML = 'まだ曲がありません。左上の＋で追加してください。';
+    playlistView.appendChild(info);
+    return;
+  }
 
-loopBtn.onclick=()=>{
-  loopMode=loopMode==="off"?"track":loopMode==="track"?"server":"off";
-  loopBtn.classList.toggle("active",loopMode!=="off");
-};
+  tracks.forEach((t, i) => {
+    if(q && !(t.display.toLowerCase().includes(q) || (t.name && t.name.toLowerCase().includes(q)))) return;
+    const el = document.createElement('div');
+    el.className = 'channel-item' + (i === currentIdx ? ' playing' : '');
+    el.dataset.index = i;
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-music';
+    icon.style.marginRight = '8px';
+    icon.style.fontSize = '12px';
+    el.appendChild(icon);
+    const text = document.createElement('span');
+    text.textContent = t.display;
+    el.appendChild(text);
 
-shuffleBtn.onclick=()=>{
-  shuffleMode=shuffleMode==="off"?"server":"off";
-  shuffleBtn.classList.toggle("active",shuffleMode!=="off");
-};
+    // click -> load & play
+    el.addEventListener('click', () => loadTrack(i, true));
+    // dblclick -> rename (inline-friendly fallback)
+    el.addEventListener('dblclick', () => renameTrack(i));
+    // right-click -> remove
+    el.addEventListener('contextmenu', async (ev) => {
+      ev.preventDefault();
+      if(confirm(`"${t.display}" を削除しますか？（IndexedDBからも削除されます）`)){
+        try { await idbDelete(STORE_TRACKS, t.id); } catch(e){ console.warn(e); }
+        tracks.splice(i,1);
+        if(currentIdx === i) { stopAndClear(); }
+        if(currentIdx > i) currentIdx--;
+        renderPlaylist();
+      }
+    });
 
-search.oninput=render;
+    playlistView.appendChild(el);
+  });
+}
 
-audio.ontimeupdate=()=>{
-  if(audio.duration) seek.value=audio.currentTime/audio.duration*100;
-};
-seek.oninput=()=>audio.currentTime=seek.value/100*audio.duration;
+/* -------------------------
+   Load / Play / Pause
+   ------------------------- */
+function ensureAudioContext(){
+  if(audioInit) return;
+  try{
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    sourceNode = audioCtx.createMediaElementSource(audio);
+    sourceNode.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    audioInit = true;
+    startVisualizer();
+  }catch(e){
+    console.warn('AudioContext init failed', e);
+  }
+}
 
-canvas.width=600;
+async function loadTrack(index, autoPlay = false){
+  if(index < 0 || index >= tracks.length) return;
+  currentIdx = index;
+  const rec = tracks[index];
+  titleDisplay.textContent = rec.display || rec.name || 'Unknown';
+  artistDisplay.textContent = rec.name || '';
+  // make object URL (if blob exists)
+  if(rec.blob instanceof Blob){
+    if(rec._objectURL) URL.revokeObjectURL(rec._objectURL);
+    rec._objectURL = URL.createObjectURL(rec.blob);
+    audio.src = rec._objectURL;
+  } else if(rec.url){
+    audio.src = rec.url;
+  } else {
+    console.warn('No blob/url for track', rec);
+    audio.removeAttribute('src');
+  }
+
+  renderPlaylist();
+  if(autoPlay){
+    try {
+      ensureAudioContext();
+      if(audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
+    } catch(e){}
+    audio.play().catch(e => console.warn('play prevented', e));
+  }
+
+  // save last played index
+  await idbPut(STORE_STATE, { k: 'last', idx: currentIdx });
+}
+
+function stopAndClear(){
+  audio.pause();
+  audio.removeAttribute('src');
+  titleDisplay.textContent = 'No Track';
+  artistDisplay.textContent = 'Waiting...';
+  currentIdx = -1;
+  renderPlaylist();
+}
+
+/* -------------------------
+   Controls behavior
+   ------------------------- */
+playBtn.addEventListener('click', async ()=>{
+  if(!audio.src){
+    if(tracks.length>0) return loadTrack(0, true);
+    return;
+  }
+  // ensure audio context on user interaction
+  ensureAudioContext();
+  try {
+    if(audio.paused){
+      if(audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
+      await audio.play();
+    } else {
+      audio.pause();
+    }
+  } catch(e){ console.warn('play error', e); }
+  updatePlayButton();
+});
+
+nextBtn.addEventListener('click', ()=> {
+  playNext();
+});
+
+prevBtn.addEventListener('click', ()=>{
+  playPrev();
+});
+
+loopBtn.addEventListener('click', ()=>{
+  loopMode = loopMode === 'off' ? 'track' : loopMode === 'track' ? 'server' : 'off';
+  loopBtn.classList.toggle('active', loopMode !== 'off');
+  loopBtn.title = `Loop: ${loopMode}`;
+});
+shuffleBtn.addEventListener('click', ()=>{
+  shuffleMode = shuffleMode === 'off' ? 'server' : 'off';
+  shuffleBtn.classList.toggle('active', shuffleMode !== 'off');
+  shuffleBtn.title = `Shuffle: ${shuffleMode}`;
+});
+
+// long-press on shuffle to toggle global shuffle
+let shufflePressTimer = null;
+shuffleBtn.addEventListener('pointerdown', ()=> {
+  shufflePressTimer = setTimeout(()=> {
+    shuffleMode = shuffleMode === 'global' ? 'off' : 'global';
+    shuffleBtn.classList.toggle('active', shuffleMode !== 'off');
+    shuffleBtn.title = `Shuffle: ${shuffleMode}`;
+  }, 600);
+});
+shuffleBtn.addEventListener('pointerup', ()=> { clearTimeout(shufflePressTimer); });
+shuffleBtn.addEventListener('pointerleave', ()=> { clearTimeout(shufflePressTimer); });
+
+seekBar.addEventListener('input', ()=>{
+  if(audio.duration) audio.currentTime = (seekBar.value/100) * audio.duration;
+});
+
+/* audio events */
+audio.addEventListener('timeupdate', ()=>{
+  if(audio.duration){
+    seekBar.value = (audio.currentTime / audio.duration) * 100;
+    timeCurrent.textContent = fmtTime(audio.currentTime);
+    timeDuration.textContent = fmtTime(audio.duration);
+  }
+});
+
+audio.addEventListener('play', ()=> updatePlayButton());
+audio.addEventListener('pause', ()=> updatePlayButton());
+
+audio.addEventListener('ended', ()=>{
+  if(loopMode === 'track'){
+    audio.currentTime = 0;
+    audio.play();
+  } else if(loopMode === 'server'){
+    playNext();
+  } else {
+    // off: advance
+    playNext();
+  }
+});
+
+function updatePlayButton(){
+  playBtn.innerHTML = audio.paused ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-pause"></i>';
+}
+
+/* Next / Prev logic with shuffle */
+function playNext(){
+  if(tracks.length === 0) return;
+  if(shuffleMode === 'server' || shuffleMode === 'global'){
+    const idx = Math.floor(Math.random() * tracks.length);
+    loadTrack(idx, true);
+  } else {
+    const next = (currentIdx + 1) % tracks.length;
+    loadTrack(next, true);
+  }
+}
+function playPrev(){
+  if(tracks.length === 0) return;
+  const prev = (currentIdx - 1 + tracks.length) % tracks.length;
+  loadTrack(prev, true);
+}
+
+/* -------------------------
+   Visualizer
+   ------------------------- */
+function startVisualizer(){
+  if(!analyser) return;
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+
+  function draw(){
+    vizRAF = requestAnimationFrame(draw);
+    analyser.getByteFrequencyData(dataArray);
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    canvas.width = w; canvas.height = h;
+    ctx.clearRect(0,0,w,h);
+    const barWidth = (w / bufferLength) * 1.8;
+    let x = 0;
+    for(let i=0;i<bufferLength;i++){
+      const v = dataArray[i];
+      const barH = v / 2;
+      ctx.fillStyle = `rgb(${80 + barH}, 80, 255)`;
+      ctx.fillRect(x, h - barH, barWidth, barH);
+      x += barWidth + 1;
+    }
+  }
+  if(!vizRAF) draw();
+}
+function stopVisualizer(){ if(vizRAF){ cancelAnimationFrame(vizRAF); vizRAF = null; } }
+
+/* -------------------------
+   Rename track inline prompt
+   ------------------------- */
+async function renameTrack(i){
+  const cur = tracks[i];
+  const newName = prompt('表示タイトルを編集', cur.display || cur.name);
+  if(newName !== null){
+    cur.display = newName;
+    try { await idbPut(STORE_TRACKS, cur); } catch(e){ console.warn('save display failed', e); }
+    renderPlaylist();
+    if(i === currentIdx) titleDisplay.textContent = cur.display;
+  }
+}
+
+/* -------------------------
+   Persistence: save state frequently
+   ------------------------- */
+let lastSavedState = null;
+async function saveState(){
+  try{
+    const state = {
+      k: 'player-state',
+      lastIndex: currentIdx,
+      currentTime: audio.currentTime || 0,
+      loopMode, shuffleMode,
+      lastSavedAt: Date.now()
+    };
+    // avoid too frequent writes
+    if(JSON.stringify(state) === JSON.stringify(lastSavedState)) return;
+    lastSavedState = state;
+    await idbPut(STORE_STATE, state);
+  }catch(e){
+    console.warn('saveState failed', e);
+  }
+}
+
+async function restoreState(){
+  try{
+    const s = await idbGet(STORE_STATE, 'player-state');
+    if(!s) return;
+    loopMode = s.loopMode || loopMode;
+    shuffleMode = s.shuffleMode || shuffleMode;
+    if(loopMode !== 'off') loopBtn.classList.add('active');
+    if(shuffleMode !== 'off') shuffleBtn.classList.add('active');
+    if(typeof s.lastIndex === 'number' && s.lastIndex >=0 && s.lastIndex < tracks.length){
+      await loadTrack(s.lastIndex, false);
+      audio.currentTime = s.currentTime || 0;
+    }
+  }catch(e){ console.warn('restoreState failed', e); }
+}
+
+/* -------------------------
+   Load DB on start
+   ------------------------- */
+(async ()=>{
+  await loadTracksFromDB();
+  await restoreState();
+  renderPlaylist();
+})();
+
+/* -------------------------
+   File input / import / export
+   ------------------------- */
+fileInput.addEventListener('change', async (ev)=>{
+  const files = Array.from(ev.target.files || []);
+  if(!files.length) return;
+  await addFilesToDB(files);
+  // auto-load first file if nothing playing
+  if(currentIdx === -1 && tracks.length>0) loadTrack(0, false);
+});
+
+logo.addEventListener('click', ()=> searchInput.focus());
+
+importBtn.addEventListener('click', ()=> fileInput.click());
+
+exportBtn.addEventListener('click', async ()=>{
+  // export metadata (no blobs) as JSON - user can re-import metadata elsewhere
+  const meta = tracks.map(t => ({ id: t.id, name: t.name, display: t.display }));
+  const blob = new Blob([JSON.stringify(meta, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download = 'playlist-metadata.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* -------------------------
+   Visibility / pagehide saving (Safari-friendly)
+   ------------------------- */
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveState(); });
+window.addEventListener('pagehide', ()=> saveState());
+
+/* periodic save */
+saveInterval = setInterval(saveState, 5000);
+
+/* -------------------------
+   Media Session (lock screen, controls)
+   ------------------------- */
+if('mediaSession' in navigator){
+  navigator.mediaSession.setActionHandler('play', async ()=>{ ensureAudioContext(); await audio.play(); });
+  navigator.mediaSession.setActionHandler('pause', ()=>{ audio.pause(); });
+  navigator.mediaSession.setActionHandler('previoustrack', ()=> playPrev());
+  navigator.mediaSession.setActionHandler('nexttrack', ()=> playNext());
+}
+
+/* -------------------------
+   Keyboard shortcuts (space/play, arrows)
+   ------------------------- */
+window.addEventListener('keydown', (e)=>{
+  if(e.code === 'Space'){ e.preventDefault(); playBtn.click(); }
+  if(e.code === 'ArrowRight'){ nextBtn.click(); }
+  if(e.code === 'ArrowLeft'){ prevBtn.click(); }
+});
+
+/* -------------------------
+   On unload: cleanup object URLs
+   ------------------------- */
+window.addEventListener('beforeunload', ()=>{
+  // revoke created object urls
+  tracks.forEach(t => { if(t._objectURL) URL.revokeObjectURL(t._objectURL); });
+  stopVisualizer();
+});
+
+/* -------------------------
+   Register service worker (PWA)
+   ------------------------- */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/service-worker.js').then(reg=>{
+    console.log('SW registered', reg.scope);
+  }).catch(e=> console.warn('SW failed', e));
+}
+
+/* -------------------------
+   Small helpful UI: resize canvas initially
+   ------------------------- */
+function resizeCanvas(){ canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; }
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
 </script>
-
 </body>
 </html>
