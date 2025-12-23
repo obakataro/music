@@ -2,467 +2,478 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Analog/Digital Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Style Player</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-color: #1a1a1a;
-            --text-color: #e0e0e0;
-            --accent-color: #ff6b6b;
-            --record-size: 280px;
-            --transition-speed: 300ms;
+            --bg-tertiary: #202225;
+            --bg-secondary: #2f3136;
+            --bg-primary: #36393f;
+            --channel-bg: #2f3136;
+            --text-normal: #dcddde;
+            --text-muted: #72767d;
+            --interactive-hover: #dcddde;
+            --interactive-active: #fff;
+            --accent: #5865F2;
+            --header-secondary: #b9bbbe;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        
         body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            overflow: hidden; /* スクロール禁止 */
+            font-family: 'gg sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-normal);
             height: 100vh;
-            width: 100vw;
-        }
-
-        /* --- 画面レイアウト (横並び) --- */
-        #app-container {
             display: flex;
-            width: 200vw; /* 2画面分 */
-            height: 100%;
-            transition: transform var(--transition-speed) ease-in-out;
-            will-change: transform;
+            overflow: hidden;
         }
 
-        .screen {
-            width: 100vw;
-            height: 100%;
-            position: relative;
+        /* 左サイドバー (サーバーリスト) */
+        .sidebar-servers {
+            width: 72px;
+            background-color: var(--bg-tertiary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 12px;
             flex-shrink: 0;
-            overflow: hidden;
         }
 
-        /* --- 3.1 レコード画面 (表) --- */
-        #record-view {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: radial-gradient(circle at center, #2a2a2a 0%, #111 100%);
-        }
-
-        /* レコード盤 */
-        .record-wrapper {
-            position: relative;
-            width: var(--record-size);
-            height: var(--record-size);
-            margin-bottom: 40px;
-        }
-
-        .record-disc {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: repeating-radial-gradient(#111, #111 2px, #222 3px, #222 4px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            transition: transform 1s ease-out; /* 停止時の慣性用 */
-        }
-
-        /* 回転アニメーション */
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
-        .record-disc.spinning {
-            animation: spin 3s linear infinite;
-        }
-        
-        .record-disc.paused {
-            animation-play-state: paused;
-        }
-
-        /* レコードラベル */
-        .record-label {
-            width: 35%;
-            height: 35%;
-            background: var(--accent-color);
+        .server-icon {
+            width: 48px;
+            height: 48px;
+            background-color: var(--bg-primary);
             border-radius: 50%;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            text-align: center;
-            padding: 5px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
-            color: #fff;
-            overflow: hidden;
-        }
-        .label-text { font-size: 10px; opacity: 0.9; }
-        .label-title { font-weight: bold; font-size: 12px; margin-bottom: 2px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        /* トーンアーム */
-        .tone-arm {
-            position: absolute;
-            top: -20px;
-            right: -20px;
-            width: 20px;
-            height: 200px;
-            background-color: #888;
-            transform-origin: top center;
-            transform: rotate(-30deg); /* 初期位置 */
-            transition: transform 0.5s linear;
-            z-index: 10;
-            pointer-events: none;
-        }
-        .tone-arm::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: -5px;
-            width: 30px;
-            height: 40px;
-            background-color: #444;
-            border-radius: 4px;
-        }
-
-        /* 操作UI */
-        .controls {
-            display: flex;
-            gap: 30px;
             align-items: center;
-            z-index: 20;
-        }
-        button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
+            margin-bottom: 8px;
             cursor: pointer;
-            padding: 10px;
-        }
-        button:active { transform: scale(0.95); }
-        .play-btn { font-size: 40px; }
-
-        .menu-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 24px;
-            z-index: 30;
+            transition: 0.2s;
+            color: var(--text-normal);
+            font-size: 20px;
         }
 
-        /* --- 3.2 メニュー画面 (裏) --- */
-        #menu-view {
-            background-color: #fff;
-            color: #333;
+        .server-icon:hover {
+            border-radius: 30%;
+            background-color: var(--accent);
+            color: #fff;
+        }
+        
+        .server-icon.active {
+            border-radius: 30%;
+            background-color: var(--accent);
+        }
+
+        /* 中サイドバー (チャンネル/プレイリスト) */
+        .sidebar-channels {
+            width: 240px;
+            background-color: var(--bg-secondary);
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            flex-shrink: 0;
+        }
+
+        .header {
+            height: 48px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            box-shadow: 0 1px 0 rgba(4,4,5,0.2);
+            font-size: 15px;
+        }
+
+        .channel-list {
+            flex: 1;
+            padding: 8px;
             overflow-y: auto;
         }
 
-        .menu-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-        .menu-header h2 { margin: 0; font-size: 20px; }
-        .back-btn { color: #333; font-size: 24px; }
+        .channel-list::-webkit-scrollbar { width: 8px; background-color: var(--bg-secondary); }
+        .channel-list::-webkit-scrollbar-thumb { background-color: var(--bg-tertiary); border-radius: 4px; }
 
-        /* ライブラリリスト */
-        .song-list { list-style: none; padding: 0; margin: 0; }
-        .song-item {
+        .channel-item {
+            padding: 6px 8px;
+            margin: 1px 0;
+            border-radius: 4px;
+            color: var(--text-muted);
+            cursor: pointer;
             display: flex;
-            justify-content: space-between;
-            padding: 15px 0;
-            border-bottom: 1px solid #f0f0f0;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .channel-item:hover {
+            background-color: rgba(79,84,92,0.32);
+            color: var(--interactive-hover);
+        }
+
+        .channel-item.playing {
+            background-color: rgba(79,84,92,0.6);
+            color: #fff;
+        }
+
+        .channel-icon { margin-right: 6px; font-size: 12px; }
+
+        /* ユーザーエリア (コントロール) */
+        .user-area {
+            background-color: #292b2f;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+
+        .control-btn {
+            background: none;
+            border: none;
+            color: var(--text-normal);
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .control-btn:hover { color: #fff; }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #4f545c;
+            border-radius: 2px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
             cursor: pointer;
         }
-        .song-info { display: flex; flex-direction: column; }
-        .song-title { font-weight: bold; font-size: 16px; }
-        .song-artist { font-size: 12px; color: #666; }
-        .delete-btn { color: #ff6b6b; font-size: 14px; margin-left: 10px; }
 
-        /* ファイル追加エリア */
-        .importer {
-            margin-top: 20px;
+        /* メインコンテンツ */
+        .main-content {
+            flex: 1;
+            background-color: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .top-bar {
+            height: 48px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 1px 0 rgba(4,4,5,0.2);
+            color: var(--header-secondary);
+        }
+
+        .stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             padding: 20px;
-            border: 2px dashed #ccc;
-            text-align: center;
-            border-radius: 8px;
-            color: #666;
         }
-        
-        /* ステータス表示 */
-        #db-status { font-size: 12px; color: #888; margin-top: auto; padding-top: 20px; }
 
-        /* --- スライド動作 --- */
-        /* メニューオープン時: コンテナ全体を左にスライド */
-        body.menu-open #app-container {
-            transform: translateX(-100vw);
+        .album-art-placeholder {
+            width: 250px;
+            height: 250px;
+            background-color: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 64px;
+            color: var(--text-muted);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.24);
         }
+
+        #visualizer {
+            width: 100%;
+            height: 150px;
+            max-width: 600px;
+        }
+
+        .now-playing-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .now-playing-artist {
+            font-size: 16px;
+            color: var(--header-secondary);
+        }
+
+        /* ファイル入力非表示 */
+        #file-input { display: none; }
     </style>
 </head>
 <body>
 
-<div id="app-container">
-    <div id="record-view" class="screen">
-        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-        
-        <div class="record-wrapper">
-            <div class="tone-arm" id="toneArm"></div>
-            <div class="record-disc" id="recordDisc">
-                <div class="record-label">
-                    <span class="label-title" id="lblTitle">No Audio</span>
-                    <span class="label-text" id="lblArtist">-</span>
-                </div>
+    <div class="sidebar-servers">
+        <div class="server-icon active" title="Home"><i class="fa-brands fa-discord"></i></div>
+        <div class="server-icon" title="Add Files" onclick="document.getElementById('file-input').click()">
+            <i class="fa-solid fa-plus"></i>
+        </div>
+    </div>
+
+    <div class="sidebar-channels">
+        <div class="header">Playlist</div>
+        <div class="channel-list" id="playlist-container">
+            <div style="padding:16px; font-size:12px; color:var(--text-muted);">
+                左の「＋」ボタンから<br>音楽ファイルを選択してください
             </div>
         </div>
 
-        <div class="controls">
-            <button onclick="prevSong()">⏮</button>
-            <button class="play-btn" onclick="togglePlay()" id="playBtn">▶</button>
-            <button onclick="nextSong()">⏭</button>
+        <div class="user-area">
+            <div class="control-buttons">
+                <button class="control-btn" id="prev-btn"><i class="fa-solid fa-backward-step"></i></button>
+                <button class="control-btn" id="play-btn"><i class="fa-solid fa-play"></i></button>
+                <button class="control-btn" id="next-btn"><i class="fa-solid fa-forward-step"></i></button>
+            </div>
+            <input type="range" id="seek-bar" value="0" min="0" step="0.1">
         </div>
     </div>
 
-    <div id="menu-view" class="screen">
-        <div class="menu-header">
-            <h2>Library</h2>
-            <button class="back-btn" onclick="toggleMenu()">✕</button>
+    <div class="main-content">
+        <div class="top-bar">
+            <i class="fa-solid fa-hashtag" style="margin-right:8px; font-size:16px; color:var(--text-muted);"></i>
+            <span id="header-title">music-player</span>
         </div>
-
-        <ul class="song-list" id="libraryList">
-            </ul>
-
-        <div class="importer" onclick="document.getElementById('fileInput').click()">
-            + Import Music (MP3/WAV)
-            <input type="file" id="fileInput" accept="audio/*" multiple style="display:none" onchange="importFiles(this)">
-        </div>
-
-        <div id="db-status">Using IndexedDB</div>
-    </div>
-</div>
-
-<script>
-    // --- 5. Data & State Management ---
-    const DB_NAME = 'AnalogPlayerDB';
-    const DB_VERSION = 1;
-    let db;
-    let audio = new Audio();
-    let playlist = []; // 現在の再生キュー
-    let currentIndex = -1;
-    let isPlaying = false;
-    let animationFrame;
-
-    // --- IndexedDB Setup ---
-    function initDB() {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
         
-        request.onupgradeneeded = (e) => {
-            db = e.target.result;
-            if (!db.objectStoreNames.contains('songs')) {
-                const store = db.createObjectStore('songs', { keyPath: 'id', autoIncrement: true });
-                store.createIndex('title', 'title', { unique: false });
-            }
-        };
-
-        request.onsuccess = (e) => {
-            db = e.target.result;
-            loadLibrary();
-        };
-
-        request.onerror = (e) => console.error("DB Error", e);
-    }
-
-    // --- File Import ---
-    async function importFiles(input) {
-        if (!input.files.length) return;
-
-        // メタデータ解析は簡易的にファイル名を使用 (本来はjsmediatags等を使う)
-        for (let file of input.files) {
-            const tx = db.transaction(['songs'], 'readwrite');
-            const store = tx.objectStore('songs');
+        <div class="stage">
+            <div class="album-art-placeholder">
+                <i class="fa-solid fa-music"></i>
+            </div>
+            <div class="now-playing-title" id="track-title">Not Playing</div>
+            <div class="now-playing-artist" id="track-artist">Waiting for files...</div>
             
-            // ファイル名からArtist - Titleを推測、なければファイル名のみ
-            let title = file.name.replace(/\.[^/.]+$/, "");
-            let artist = "Unknown Artist";
-            
-            if (title.includes('-')) {
-                const parts = title.split('-');
-                artist = parts[0].trim();
-                title = parts.slice(1).join('-').trim();
+            <canvas id="visualizer"></canvas>
+        </div>
+    </div>
+
+    <input type="file" id="file-input" multiple accept="audio/*">
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const playlistContainer = document.getElementById('playlist-container');
+        const playBtn = document.getElementById('play-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const seekBar = document.getElementById('seek-bar');
+        const trackTitle = document.getElementById('track-title');
+        const trackArtist = document.getElementById('track-artist');
+        const headerTitle = document.getElementById('header-title');
+        const canvas = document.getElementById('visualizer');
+        const canvasCtx = canvas.getContext('2d');
+
+        let audio = new Audio();
+        let playlist = []; // { name, url, fileObject }
+        let currentIndex = 0;
+        let isPlaying = false;
+        
+        // Audio Context for Visualizer
+        let audioCtx;
+        let analyser;
+        let source;
+
+        // 初期化
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser();
+                source = audioCtx.createMediaElementSource(audio);
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination);
+                analyser.fftSize = 256;
+                drawVisualizer();
             }
-
-            const songData = {
-                title: title,
-                artist: artist,
-                blob: file,
-                addedAt: new Date()
-            };
-
-            store.add(songData);
         }
-        
-        input.value = ''; // リセット
-        setTimeout(loadLibrary, 500); // 少し待ってリロード
-    }
 
-    // --- Library UI ---
-    function loadLibrary() {
-        const tx = db.transaction(['songs'], 'readonly');
-        const store = tx.objectStore('songs');
-        const request = store.getAll();
+        // ファイル読み込み処理
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
 
-        request.onsuccess = () => {
-            const songs = request.result;
-            const listEl = document.getElementById('libraryList');
-            listEl.innerHTML = '';
-            
-            // プレイリスト更新
-            playlist = songs;
-
-            songs.forEach((song, index) => {
-                const li = document.createElement('li');
-                li.className = 'song-item';
-                li.innerHTML = `
-                    <div class="song-info" onclick="playSongAtIndex(${index})">
-                        <span class="song-title">${song.title}</span>
-                        <span class="song-artist">${song.artist}</span>
-                    </div>
-                    <button class="delete-btn" onclick="deleteSong(${song.id})">🗑</button>
-                `;
-                listEl.appendChild(li);
+            // プレイリストに追加
+            files.forEach(file => {
+                playlist.push({
+                    name: file.name.replace(/\.[^/.]+$/, ""), // 拡張子削除
+                    url: URL.createObjectURL(file),
+                    originalFile: file
+                });
             });
 
-            updateStorageInfo();
-        };
-    }
+            renderPlaylist();
+            // 最初の曲ならロード
+            if (playlist.length === files.length) {
+                loadTrack(0);
+            }
+        });
 
-    function deleteSong(id) {
-        if(!confirm("削除しますか？")) return;
-        const tx = db.transaction(['songs'], 'readwrite');
-        tx.objectStore('songs').delete(id);
-        tx.oncomplete = () => loadLibrary();
-    }
-
-    // --- Playback Logic ---
-    function playSongAtIndex(index) {
-        if (index < 0 || index >= playlist.length) return;
-        
-        currentIndex = index;
-        const song = playlist[currentIndex];
-        
-        // BlobからURL生成
-        const url = URL.createObjectURL(song.blob);
-        audio.src = url;
-        audio.play();
-        
-        // UI更新
-        document.getElementById('lblTitle').textContent = song.title;
-        document.getElementById('lblArtist').textContent = song.artist;
-        updatePlayState(true);
-        
-        // メニューが開いていたら閉じる
-        document.body.classList.remove('menu-open');
-    }
-
-    function togglePlay() {
-        if (!audio.src) {
-            if (playlist.length > 0) playSongAtIndex(0);
-            return;
+        // プレイリスト描画
+        function renderPlaylist() {
+            playlistContainer.innerHTML = '';
+            playlist.forEach((track, index) => {
+                const div = document.createElement('div');
+                div.className = `channel-item ${index === currentIndex ? 'playing' : ''}`;
+                div.innerHTML = `<i class="fa-solid fa-volume-high channel-icon"></i> ${track.name}`;
+                div.onclick = () => {
+                    loadTrack(index);
+                    playTrack();
+                };
+                playlistContainer.appendChild(div);
+            });
         }
 
-        if (audio.paused) {
-            audio.play();
-            updatePlayState(true);
-        } else {
+        // 曲のロード
+        function loadTrack(index) {
+            if (index < 0 || index >= playlist.length) return;
+            currentIndex = index;
+            const track = playlist[index];
+            
+            audio.src = track.url;
+            audio.load();
+
+            trackTitle.innerText = track.name;
+            headerTitle.innerText = `playing: ${track.name}`;
+            trackArtist.innerText = "Local File"; // メタデータ解析機能を入れると重くなるため簡易表示
+
+            // UI更新
+            renderPlaylist();
+            updateMediaSession();
+        }
+
+        // 再生・一時停止
+        function playTrack() {
+            initAudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const promise = audio.play();
+            if (promise !== undefined) {
+                promise.then(_ => {
+                    isPlaying = true;
+                    playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                    updateMediaSessionState();
+                }).catch(error => console.error(error));
+            }
+        }
+
+        function pauseTrack() {
             audio.pause();
-            updatePlayState(false);
+            isPlaying = false;
+            playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            updateMediaSessionState();
         }
-    }
 
-    function prevSong() {
-        if (currentIndex > 0) playSongAtIndex(currentIndex - 1);
-    }
-
-    function nextSong() {
-        if (currentIndex < playlist.length - 1) playSongAtIndex(currentIndex + 1);
-    }
-
-    // --- UI & Animation ---
-    function updatePlayState(playing) {
-        isPlaying = playing;
-        const disc = document.getElementById('recordDisc');
-        const btn = document.getElementById('playBtn');
-
-        if (playing) {
-            disc.classList.add('spinning');
-            disc.classList.remove('paused');
-            btn.textContent = '⏸';
-            startArmTracking();
-        } else {
-            disc.classList.add('paused');
-            // 完全に停止させず、CSSのtransitionで惰性っぽく見せる
-            btn.textContent = '▶';
-            stopArmTracking();
+        function togglePlay() {
+            if (playlist.length === 0) return;
+            isPlaying ? pauseTrack() : playTrack();
         }
-    }
 
-    // トーンアーム制御
-    function startArmTracking() {
-        const arm = document.getElementById('toneArm');
-        
-        function update() {
-            if (!audio.paused && !audio.ended && audio.duration) {
-                // 再生位置に応じて角度計算 (例: 0% -> -30deg, 100% -> 15deg)
-                const progress = audio.currentTime / audio.duration;
-                const startAngle = -30;
-                const endAngle = 15;
-                const currentAngle = startAngle + (endAngle - startAngle) * progress;
-                
-                arm.style.transform = `rotate(${currentAngle}deg)`;
-                animationFrame = requestAnimationFrame(update);
+        function nextTrack() {
+            let nextIndex = currentIndex + 1;
+            if (nextIndex >= playlist.length) nextIndex = 0; // ループ
+            loadTrack(nextIndex);
+            playTrack();
+        }
+
+        function prevTrack() {
+            let prevIndex = currentIndex - 1;
+            if (prevIndex < 0) prevIndex = playlist.length - 1;
+            loadTrack(prevIndex);
+            playTrack();
+        }
+
+        // イベントリスナー
+        playBtn.onclick = togglePlay;
+        nextBtn.onclick = nextTrack;
+        prevBtn.onclick = prevTrack;
+
+        audio.addEventListener('timeupdate', () => {
+            if(audio.duration) {
+                const progress = (audio.currentTime / audio.duration) * 100;
+                seekBar.value = progress; // シークバーは0-100で管理
+            }
+        });
+
+        audio.addEventListener('ended', nextTrack);
+
+        seekBar.addEventListener('input', () => {
+            const time = (seekBar.value / 100) * audio.duration;
+            audio.currentTime = time;
+        });
+
+        // Media Session API (OS連携・バックグラウンド操作用)
+        function updateMediaSession() {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: playlist[currentIndex].name,
+                    artist: 'Local Library',
+                    album: 'Web MP3 Player',
+                    artwork: [
+                        { src: 'https://cdn-icons-png.flaticon.com/512/1384/1384060.png', sizes: '512x512', type: 'image/png' }
+                    ]
+                });
+
+                navigator.mediaSession.setActionHandler('play', togglePlay);
+                navigator.mediaSession.setActionHandler('pause', togglePlay);
+                navigator.mediaSession.setActionHandler('previoustrack', prevTrack);
+                navigator.mediaSession.setActionHandler('nexttrack', nextTrack);
             }
         }
-        cancelAnimationFrame(animationFrame);
-        update();
-    }
 
-    function stopArmTracking() {
-        cancelAnimationFrame(animationFrame);
-    }
-    
-    // 曲終了時の処理
-    audio.onended = () => {
-        updatePlayState(false);
-        // トーンアームを戻す
-        document.getElementById('toneArm').style.transform = `rotate(-30deg)`;
-        nextSong(); // 自動で次へ
-    };
-
-    // --- Menu Interaction ---
-    function toggleMenu() {
-        document.body.classList.toggle('menu-open');
-    }
-
-    function updateStorageInfo() {
-        if (navigator.storage && navigator.storage.estimate) {
-            navigator.storage.estimate().then(estimate => {
-                const usageMB = (estimate.usage / 1024 / 1024).toFixed(1);
-                document.getElementById('db-status').textContent = `DB Usage: ${usageMB} MB`;
-            });
+        function updateMediaSessionState() {
+             if ('mediaSession' in navigator) {
+                 navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+             }
         }
-    }
 
-    // --- Initial Load ---
-    window.onload = initDB;
+        // ビジュアライザー描画
+        function drawVisualizer() {
+            requestAnimationFrame(drawVisualizer);
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
 
-</script>
+            canvasCtx.fillStyle = '#36393f'; // 背景クリア
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const barWidth = (canvas.width / bufferLength) * 2.5;
+            let barHeight;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                barHeight = dataArray[i] / 2;
+
+                // Discordっぽい色 (Blurple)
+                canvasCtx.fillStyle = `rgb(${88 + (barHeight / 2)}, 101, 242)`;
+                canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+
+                x += barWidth + 1;
+            }
+        }
+
+        // リサイズ対応
+        window.addEventListener('resize', () => {
+            canvas.width = canvas.parentElement.clientWidth;
+        });
+        canvas.width = canvas.parentElement.clientWidth;
+
+    </script>
 </body>
 </html>
